@@ -11,7 +11,8 @@ export function createServer(): McpServer {
   });
 
   server.tool(
-    "printReceipt",
+    "print",
+    "Print markdown content to a POS printer via CUPS URI. Use this when the user asks to print, print a receipt, make a hard copy, or print something out.",
     {
       printerUri: z.string(),
       markdown: z.string(),

@@ -2,6 +2,8 @@
 
 MCP server for POS printer receipts using `posprint`.
 
+The tool is intentionally named `print` so clients can map natural user phrasing such as "print receipt", "hard copy", or "print this out" to the same operation.
+
 ## Requirements
 - Node.js 20+
 - SSH access to the private Bitbucket repo `git@bitbucket.org:bestimmaa/posprint.git`
@@ -22,7 +24,7 @@ npm run build
 npm start
 ```
 
-## Tool: `printReceipt`
+## Tool: `print`
 
 Input:
 - `printerUri: string`
