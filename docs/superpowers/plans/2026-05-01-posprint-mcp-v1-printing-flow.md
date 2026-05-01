@@ -6,7 +6,7 @@
 
 **Architecture:** Keep v1 minimal with a thin `posprint` adapter. The MCP tool handler validates input, calls a timeout-protected print client, and maps failures into stable public error codes. Tests use Vitest with module mocking so CI does not require printer hardware.
 
-**Tech Stack:** Node.js, TypeScript, `@modelcontextprotocol/sdk`, local `posprint` working copy (`file:../posprint` until published), Zod, Vitest
+**Tech Stack:** Node.js, TypeScript, `@modelcontextprotocol/sdk`, private Bitbucket `posprint` git dependency, Zod, Vitest
 
 ---
 
@@ -58,7 +58,7 @@ Expected: command fails with `ENOENT` because `package.json` does not exist.
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "posprint": "file:../posprint",
+    "posprint": "git+ssh://git@bitbucket.org/bestimmaa/posprint.git#master",
     "zod": "^3.23.8"
   },
   "devDependencies": {
