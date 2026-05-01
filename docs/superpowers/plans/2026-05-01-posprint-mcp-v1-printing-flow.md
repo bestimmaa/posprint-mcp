@@ -6,7 +6,7 @@
 
 **Architecture:** Keep v1 minimal with a thin `posprint` adapter. The MCP tool handler validates input, calls a timeout-protected print client, and maps failures into stable public error codes. Tests use Vitest with module mocking so CI does not require printer hardware.
 
-**Tech Stack:** Node.js, TypeScript, `@modelcontextprotocol/sdk`, `posprint`, Zod, Vitest
+**Tech Stack:** Node.js, TypeScript, `@modelcontextprotocol/sdk`, local `posprint` working copy (`file:../posprint` until published), Zod, Vitest
 
 ---
 
@@ -58,7 +58,7 @@ Expected: command fails with `ENOENT` because `package.json` does not exist.
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "posprint": "^1.0.3",
+    "posprint": "file:../posprint",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -293,18 +293,27 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { printMarkdown } from "../../src/printing/posprintClient.js";
 
 vi.mock("posprint", () => ({
-  default: vi.fn()
+  default: {
+    markdownToEscpos: vi.fn(),
+    printRawToPrinterUri: vi.fn()
+  }
 }));
 
 import posprint from "posprint";
+
+const api = posprint as unknown as {
+  markdownToEscpos: ReturnType<typeof vi.fn>;
+  printRawToPrinterUri: ReturnType<typeof vi.fn>;
+};
 
 describe("printMarkdown", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("calls posprint with printer URI and markdown", async () => {
-    vi.mocked(posprint).mockResolvedValueOnce({ jobId: "42" });
+  it("converts markdown and prints to CUPS URI", async () => {
+    api.markdownToEscpos.mockReturnValueOnce(Uint8Array.from([0x1b, 0x40]));
+    api.printRawToPrinterUri.mockResolvedValueOnce({ printerUri: "ipps://printer.local/ipp/print" });
 
     const result = await printMarkdown({
       printerUri: "ipps://printer.local/ipp/print",
@@ -313,12 +322,18 @@ describe("printMarkdown", () => {
       timeoutMs: 5000
     });
 
-    expect(posprint).toHaveBeenCalledTimes(1);
-    expect(result.jobId).toBe("42");
+    expect(api.markdownToEscpos).toHaveBeenCalledWith("# Receipt", { charsPerLine: 42 });
+    expect(api.printRawToPrinterUri).toHaveBeenCalledTimes(1);
+    expect(api.printRawToPrinterUri).toHaveBeenCalledWith(
+      "ipps://printer.local/ipp/print",
+      expect.any(Buffer)
+    );
+    expect(result.jobId).toBeUndefined();
   });
 
-  it("throws timeout error when execution exceeds timeout", async () => {
-    vi.mocked(posprint).mockImplementationOnce(
+  it("throws timeout error when URI print exceeds timeout", async () => {
+    api.markdownToEscpos.mockReturnValueOnce(Uint8Array.from([0x1b, 0x40]));
+    api.printRawToPrinterUri.mockImplementationOnce(
       () => new Promise((resolve) => setTimeout(() => resolve({}), 50)) as Promise<any>
     );
 
@@ -343,11 +358,17 @@ Expected: FAIL with missing module `src/printing/posprintClient.ts`.
 ```ts
 import posprint from "posprint";
 
+const { markdownToEscpos, printRawToPrinterUri } = posprint as unknown as {
+  markdownToEscpos: (markdown: string, options?: { charsPerLine?: number }) => Uint8Array | Buffer | number[];
+  printRawToPrinterUri: (printerUri: string, data: Buffer) => Promise<unknown>;
+};
+
 export interface PrintMarkdownParams {
   printerUri: string;
   markdown: string;
   copies?: number;
   timeoutMs?: number;
+  charsPerLine?: number;
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -367,19 +388,16 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 export async function printMarkdown(params: PrintMarkdownParams): Promise<{ jobId?: string }> {
-  const { printerUri, markdown, copies = 1, timeoutMs = 15_000 } = params;
+  const { printerUri, markdown, copies = 1, timeoutMs = 15_000, charsPerLine = 42 } = params;
 
-  const result = (await withTimeout(
-    posprint({
-      uri: printerUri,
-      data: markdown,
-      copies,
-      type: "markdown"
-    }) as Promise<{ jobId?: string }>,
-    timeoutMs
-  )) as { jobId?: string };
+  const escpos = markdownToEscpos(markdown, { charsPerLine });
+  const payload = Buffer.from(escpos);
 
-  return { jobId: result?.jobId };
+  for (let i = 0; i < copies; i += 1) {
+    await withTimeout(printRawToPrinterUri(printerUri, payload), timeoutMs);
+  }
+
+  return {};
 }
 ```
 
