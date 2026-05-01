@@ -34,4 +34,4 @@ If markdown exceeds 80 lines, preview responses include a warning and recommend 
 
 `posprint` is pulled from private Bitbucket git (not from public npm):
 
-- `git+ssh://git@bitbucket.org/bestimmaa/posprint.git#master`
+- `git+ssh://git@bitbucket.org/bestimmaa/posprint.git#v0.2.0`
