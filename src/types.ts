@@ -4,9 +4,13 @@ export type PrintErrorCode =
   | "TIMEOUT"
   | "UNKNOWN_ERROR";
 
+export type PrintMode = "preview" | "confirm";
+
 export interface PrintReceiptInput {
   printerUri: string;
   markdown: string;
+  mode: PrintMode;
+  confirmationToken?: string;
   options?: {
     copies?: number;
     timeoutMs?: number;
@@ -24,3 +28,17 @@ export interface PrintReceiptSuccess {
   ok: true;
   meta: PrintSuccessMeta;
 }
+
+export interface PrintPreviewSuccess {
+  ok: true;
+  requiresConfirmation: true;
+  confirmationToken: string;
+  preview: {
+    lineCount: number;
+    snippet: string;
+    suggestedAction: string;
+    excessiveLengthWarning?: string;
+  };
+}
+
+export type PrintToolResult = PrintReceiptSuccess | PrintPreviewSuccess;

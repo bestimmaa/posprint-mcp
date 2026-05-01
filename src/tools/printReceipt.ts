@@ -1,14 +1,59 @@
 import { ZodError } from "zod";
+import { createConfirmationToken, consumeConfirmationToken } from "../confirmation/store.js";
 import { AppError, mapUnknownError } from "../errors.js";
 import { printMarkdown } from "../printing/posprintClient.js";
-import type { PrintReceiptSuccess } from "../types.js";
+import type { PrintToolResult } from "../types.js";
 import { parsePrintReceiptInput } from "../validation/printReceiptSchema.js";
 
-export async function handlePrintReceipt(input: unknown): Promise<PrintReceiptSuccess> {
+const EXCESSIVE_LINE_THRESHOLD = 80;
+const PREVIEW_LINE_COUNT = 20;
+
+function getLineCount(markdown: string): number {
+  return markdown.split(/\r?\n/).length;
+}
+
+function buildSnippet(markdown: string, lineCount = PREVIEW_LINE_COUNT): string {
+  return markdown.split(/\r?\n/).slice(0, lineCount).join("\n");
+}
+
+export async function handlePrintReceipt(input: unknown): Promise<PrintToolResult> {
   const start = Date.now();
 
   try {
     const parsed = parsePrintReceiptInput(input);
+
+    if (parsed.mode === "preview") {
+      const lineCount = getLineCount(parsed.markdown);
+      const confirmationToken = createConfirmationToken({
+        printerUri: parsed.printerUri,
+        markdown: parsed.markdown,
+        options: parsed.options
+      });
+
+      return {
+        ok: true,
+        requiresConfirmation: true,
+        confirmationToken,
+        preview: {
+          lineCount,
+          snippet: buildSnippet(parsed.markdown),
+          suggestedAction: "Ask the user to confirm printing this preview or summarize it first.",
+          ...(lineCount > EXCESSIVE_LINE_THRESHOLD
+            ? {
+                excessiveLengthWarning:
+                  "This printout is long (>80 lines). Consider summarizing before printing."
+              }
+            : {})
+        }
+      };
+    }
+
+    consumeConfirmationToken({
+      confirmationToken: parsed.confirmationToken!,
+      printerUri: parsed.printerUri,
+      markdown: parsed.markdown,
+      options: parsed.options
+    });
 
     const result = await printMarkdown({
       printerUri: parsed.printerUri,
@@ -28,7 +73,7 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintReceiptSu
     };
   } catch (error) {
     if (error instanceof ZodError) {
-      throw new AppError("VALIDATION_ERROR", "Invalid printReceipt input", {
+      throw new AppError("VALIDATION_ERROR", "Invalid print input", {
         issues: error.issues
       });
     }
