@@ -12,7 +12,7 @@ The tool is intentionally named `print` so clients can map natural user phrasing
 ## Run With npx
 
 ```bash
-npx @bestimmaa/posprint-mcp
+npx --package=@bestimmaa/posprint-mcp posprint-mcp
 ```
 
 ## Install
@@ -44,7 +44,7 @@ For one-off use without installation, configure the command through `npx`.
   "mcpServers": {
     "posprint": {
       "command": "npx",
-      "args": ["--yes", "@bestimmaa/posprint-mcp"]
+      "args": ["--yes", "--package=@bestimmaa/posprint-mcp", "posprint-mcp"]
     }
   }
 }
