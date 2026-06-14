@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { printMarkdown } from "../../src/printing/posprintClient.js";
 
-vi.mock("posprint", () => ({
+vi.mock("@bestimmaa/posprint", () => ({
   default: {
     markdownToEscpos: vi.fn(),
     printRawToPrinterUri: vi.fn()
   }
 }));
 
-import posprint from "posprint";
+import posprint from "@bestimmaa/posprint";
 
 const api = posprint as unknown as {
   markdownToEscpos: ReturnType<typeof vi.fn>;

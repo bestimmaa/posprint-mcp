@@ -1,4 +1,4 @@
-import posprint from "posprint";
+import posprint from "@bestimmaa/posprint";
 
 const { markdownToEscpos, printRawToPrinterUri } = posprint as unknown as {
   markdownToEscpos: (markdown: string, options?: { charsPerLine?: number }) => Uint8Array | Buffer | number[];

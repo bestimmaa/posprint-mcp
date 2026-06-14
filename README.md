@@ -1,25 +1,71 @@
-# posprint-mcp
+# @bestimmaa/posprint-mcp
 
-MCP server for POS printer receipts using `posprint`.
+MCP server for POS printer receipts using [`@bestimmaa/posprint`](https://www.npmjs.com/package/@bestimmaa/posprint).
 
 The tool is intentionally named `print` so clients can map natural user phrasing such as "print receipt", "hard copy", or "print this out" to the same operation.
 
 ## Requirements
+
 - Node.js 20+
-- SSH access to the private Bitbucket repo `git@bitbucket.org:bestimmaa/posprint.git`
-- A printer reachable via a CUPS URI supported by `posprint`
+- A printer reachable via a CUPS URI supported by `@bestimmaa/posprint`
+
+## Run With npx
+
+```bash
+npx @bestimmaa/posprint-mcp
+```
 
 ## Install
+
+```bash
+npm install -g @bestimmaa/posprint-mcp
+```
+
+After global installation, the package exposes a `posprint-mcp` binary on your PATH.
+
+## MCP Client Configuration
+
+Use `posprint-mcp` as the command when the package is installed in the client environment.
+
+```json
+{
+  "mcpServers": {
+    "posprint": {
+      "command": "posprint-mcp"
+    }
+  }
+}
+```
+
+For one-off use without installation, configure the command through `npx`.
+
+```json
+{
+  "mcpServers": {
+    "posprint": {
+      "command": "npx",
+      "args": ["--yes", "@bestimmaa/posprint-mcp"]
+    }
+  }
+}
+```
+
+## Development
+
 ```bash
 npm install
-```
-
-## Build
-```bash
 npm run build
+npm test
 ```
 
-## Run
+Run the local server from source:
+
+```bash
+npm run dev
+```
+
+Run the built server:
+
 ```bash
 npm start
 ```
@@ -27,6 +73,7 @@ npm start
 ## Tool: `print`
 
 Input:
+
 - `printerUri: string`
 - `markdown: string`
 - `mode: "preview" | "confirm"`
@@ -40,6 +87,7 @@ Input:
 3. Call `print` again with `mode: "confirm"` and the returned `confirmationToken`.
 
 Preview response includes:
+
 - `requiresConfirmation: true`
 - `confirmationToken`
 - `preview.lineCount`
@@ -47,12 +95,13 @@ Preview response includes:
 - `preview.excessiveLengthWarning` (present when markdown is more than 80 lines)
 
 Confirm response shape:
+
 ```json
 { "ok": true, "meta": { "printerUri": "...", "durationMs": 20, "printedAt": "...", "jobId": "optional" } }
 ```
 
 Error codes:
+
 - `VALIDATION_ERROR`
 - `PRINTER_ERROR`
 - `TIMEOUT`
-- `UNKNOWN_ERROR`

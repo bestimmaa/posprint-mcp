@@ -55,7 +55,7 @@ export function createServer(): McpServer {
   return server;
 }
 
-if (process.env.NODE_ENV !== "test") {
+export async function startServer(): Promise<void> {
   const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
