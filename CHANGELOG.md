@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The version history source of truth is git tags in the format `vMAJOR.MINOR.PATCH`.
 
+## [0.2.1] - 2026-06-14
+
+### Fixed
+
+- `dist/src/cli.js` is now packed with the executable bit set, so `npx -y @bestimmaa/posprint-mcp` works without `command not found`.
+
 ## [0.2.0] - 2026-06-14
 
 ### Fixed
