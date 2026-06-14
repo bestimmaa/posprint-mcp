@@ -9,42 +9,34 @@ The tool is intentionally named `print` so clients can map natural user phrasing
 - Node.js 20+
 - A printer reachable via a CUPS URI supported by `@bestimmaa/posprint`
 
-## Run With npx
-
-```bash
-npx --package=@bestimmaa/posprint-mcp posprint-mcp
-```
-
-## Install
-
-```bash
-npm install -g @bestimmaa/posprint-mcp
-```
-
-After global installation, the package exposes a `posprint-mcp` binary on your PATH.
-
 ## MCP Client Configuration
 
-Use `posprint-mcp` as the command when the package is installed in the client environment.
-
-```json
-{
-  "mcpServers": {
-    "posprint": {
-      "command": "posprint-mcp"
-    }
-  }
-}
-```
-
-For one-off use without installation, configure the command through `npx`.
+Add this to your MCP client config. No separate installation step is required — `npx` fetches the package on first run.
 
 ```json
 {
   "mcpServers": {
     "posprint": {
       "command": "npx",
-      "args": ["--yes", "--package=@bestimmaa/posprint-mcp", "posprint-mcp"]
+      "args": ["-y", "@bestimmaa/posprint-mcp"]
+    }
+  }
+}
+```
+
+## Global Install (optional)
+
+```bash
+npm install -g @bestimmaa/posprint-mcp
+```
+
+After global installation, you can use the shorter form in your MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "posprint": {
+      "command": "posprint-mcp"
     }
   }
 }
