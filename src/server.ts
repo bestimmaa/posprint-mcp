@@ -12,7 +12,7 @@ export function createServer(): McpServer {
 
   server.tool(
     "print",
-    "Print markdown content to a POS printer via CUPS URI. Use this when the user asks to print, print a receipt, make a hard copy, or print something out. Call with mode=preview first, then call again with mode=confirm and confirmationToken.",
+    "Print markdown content to a POS printer via CUPS URI. Use this tool when the user asks to print, print out, print a receipt/report/ticket/invoice/bill/label, make a hard copy, get a physical copy, send to printer, or output to paper. Call with mode=preview first, then call again with mode=confirm and confirmationToken.",
     {
       printerUri: z.string(),
       markdown: z.string(),
