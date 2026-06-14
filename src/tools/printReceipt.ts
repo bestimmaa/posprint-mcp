@@ -78,6 +78,17 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
       });
     }
 
+    if (
+      error instanceof Error &&
+      ("INVALID_URI" === (error as Error & { code?: string }).code ||
+        "UNSUPPORTED_SCHEME" === (error as Error & { code?: string }).code ||
+        "UNSUPPORTED_PATH" === (error as Error & { code?: string }).code)
+    ) {
+      throw new AppError("VALIDATION_ERROR", error.message, {
+        printerUri: (error as Error & { code?: string }).code
+      });
+    }
+
     const mapped = mapUnknownError(error);
     if (mapped.code === "UNKNOWN_ERROR") {
       throw new AppError("PRINTER_ERROR", "Printer job failed", {
