@@ -13,6 +13,11 @@ describe("mapUnknownError", () => {
     expect(mapped.code).toBe("TIMEOUT");
   });
 
+  it("maps 'timed out' errors (from ipp-printer) to TIMEOUT", () => {
+    const mapped = mapUnknownError(new Error("IPP request timed out after 15000ms for ipp://printer.local/printers/T88V"));
+    expect(mapped.code).toBe("TIMEOUT");
+  });
+
   it("maps unknown errors to UNKNOWN_ERROR", () => {
     const mapped = mapUnknownError(new Error("boom"));
     expect(mapped.code).toBe("UNKNOWN_ERROR");

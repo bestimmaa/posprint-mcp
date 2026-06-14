@@ -16,7 +16,7 @@ export function mapUnknownError(error: unknown): AppError {
     return error;
   }
 
-  if (error instanceof Error && /timeout/i.test(error.message)) {
+  if (error instanceof Error && /time(?:out|d\s+out)/i.test(error.message)) {
     return new AppError("TIMEOUT", "Printing timed out", { cause: error.message });
   }
 

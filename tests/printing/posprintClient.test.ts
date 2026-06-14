@@ -35,16 +35,15 @@ describe("printMarkdown", () => {
     expect(api.printRawToPrinterUri).toHaveBeenCalledTimes(1);
     expect(api.printRawToPrinterUri).toHaveBeenCalledWith(
       "ipps://printer.local/ipp/print",
-      expect.any(Buffer)
+      expect.any(Buffer),
+      { timeoutMs: 5000 }
     );
     expect(result.jobId).toBeUndefined();
   });
 
   it("throws timeout error when URI print exceeds timeout", async () => {
     api.markdownToEscpos.mockReturnValueOnce(Uint8Array.from([0x1b, 0x40]));
-    api.printRawToPrinterUri.mockImplementationOnce(
-      () => new Promise((resolve) => setTimeout(() => resolve({}), 50)) as Promise<any>
-    );
+    api.printRawToPrinterUri.mockRejectedValueOnce(new Error("IPP request timed out after 10ms"));
 
     await expect(
       printMarkdown({
@@ -52,6 +51,23 @@ describe("printMarkdown", () => {
         markdown: "# Receipt",
         timeoutMs: 10
       })
-    ).rejects.toThrow(/timeout/i);
+    ).rejects.toThrow(/timed out/i);
+  });
+
+  it("forwards timeoutMs to printRawToPrinterUri", async () => {
+    api.markdownToEscpos.mockReturnValueOnce(Uint8Array.from([0x1b, 0x40]));
+    api.printRawToPrinterUri.mockResolvedValueOnce({});
+
+    await printMarkdown({
+      printerUri: "ipps://printer.local/ipp/print",
+      markdown: "# Receipt",
+      timeoutMs: 7500
+    });
+
+    expect(api.printRawToPrinterUri).toHaveBeenCalledWith(
+      "ipps://printer.local/ipp/print",
+      expect.any(Buffer),
+      { timeoutMs: 7500 }
+    );
   });
 });

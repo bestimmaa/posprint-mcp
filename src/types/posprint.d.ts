@@ -4,7 +4,7 @@ declare module "@bestimmaa/posprint" {
     options?: { charsPerLine?: number }
   ): Uint8Array | Buffer | number[];
 
-  export function printRawToPrinterUri(printerUri: string, data: Buffer): Promise<unknown>;
+  export function printRawToPrinterUri(printerUri: string, data: Buffer, options?: { timeoutMs?: number }): Promise<unknown>;
 
   const api: {
     markdownToEscpos: typeof markdownToEscpos;

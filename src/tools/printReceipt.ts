@@ -18,9 +18,11 @@ function buildSnippet(markdown: string, lineCount = PREVIEW_LINE_COUNT): string 
 
 export async function handlePrintReceipt(input: unknown): Promise<PrintToolResult> {
   const start = Date.now();
+  let printerUri: string | undefined;
 
   try {
     const parsed = parsePrintReceiptInput(input);
+    printerUri = parsed.printerUri;
 
     if (parsed.mode === "preview") {
       const lineCount = getLineCount(parsed.markdown);
@@ -85,7 +87,7 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
         "UNSUPPORTED_PATH" === (error as Error & { code?: string }).code)
     ) {
       throw new AppError("VALIDATION_ERROR", error.message, {
-        printerUri: (error as Error & { code?: string }).code
+        printerUri
       });
     }
 

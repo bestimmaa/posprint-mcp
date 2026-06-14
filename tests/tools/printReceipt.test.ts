@@ -92,4 +92,26 @@ describe("handlePrintReceipt", () => {
       })
     ).rejects.toBeInstanceOf(AppError);
   });
+
+  it("includes the actual printerUri in VALIDATION_ERROR meta when URI is invalid", async () => {
+    vi.mocked(consumeConfirmationToken).mockReturnValueOnce(undefined);
+    const uriError = new Error("Unsupported printer URI scheme. Use ipp:// or ipps://.");
+    (uriError as Error & { code?: string }).code = "UNSUPPORTED_SCHEME";
+    vi.mocked(printMarkdown).mockRejectedValueOnce(uriError);
+
+    try {
+      await handlePrintReceipt({
+        printerUri: "http://bad-scheme/printers/test",
+        markdown: "# Hi",
+        mode: "confirm",
+        confirmationToken: "token-123"
+      });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AppError);
+      const err = e as AppError;
+      expect(err.code).toBe("VALIDATION_ERROR");
+      expect(err.meta?.printerUri).toBe("http://bad-scheme/printers/test");
+    }
+  });
 });
