@@ -1,4 +1,4 @@
-declare module "posprint" {
+declare module "@bestimmaa/posprint" {
   export function markdownToEscpos(
     markdown: string,
     options?: { charsPerLine?: number }

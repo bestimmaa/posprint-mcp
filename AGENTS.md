@@ -6,7 +6,9 @@
 
 ## Printing Implementation
 
-This MCP server uses the private [`posprint` Node.js module](https://bitbucket.org/bestimmaa/posprint) to implement its printing features.
+This MCP server uses the public npm package `@bestimmaa/posprint` to implement its printing features.
+
+The npm package is prepared as `@bestimmaa/posprint-mcp` and exposes a `posprint-mcp` binary.
 
 ## MCP Tool Contract
 
@@ -29,9 +31,3 @@ Printing is a two-step flow:
 ## Long Markdown Warning
 
 If markdown exceeds 80 lines, preview responses include a warning and recommend summarizing before printing.
-
-## Dependency Source
-
-`posprint` is pulled from private Bitbucket git (not from public npm):
-
-- `git+ssh://git@bitbucket.org/bestimmaa/posprint.git#v0.2.0`

@@ -1,19 +1,43 @@
 {
-  "name": "posprint-mcp",
+  "name": "@bestimmaa/posprint-mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "MCP server for printing markdown receipts on POS printers.",
+  "license": "MIT",
   "type": "module",
-  "main": "dist/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/src/server.js",
+  "bin": {
+    "posprint-mcp": "./dist/src/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bestimmaa/posprint-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bestimmaa/posprint-mcp/issues"
+  },
+  "homepage": "https://github.com/bestimmaa/posprint-mcp#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "dev": "tsx src/server.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "start": "node dist/src/cli.js",
+    "dev": "tsx src/cli.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@bestimmaa/posprint": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "posprint": "git+ssh://git@bitbucket.org/bestimmaa/posprint.git#v0.2.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
