@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 "use strict";
 
-const { execFileSync } = require("node:child_process");
-const { existsSync, readFileSync, unlinkSync } = require("node:fs");
-const path = require("node:path");
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
 
 const allowedReleaseTypes = new Set(["patch", "minor", "major"]);
@@ -237,7 +242,8 @@ function main(argv = process.argv.slice(2)) {
   console.log("Next: npm publish --access public");
 }
 
-if (require.main === module) {
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
   try {
     main();
   } catch (error) {
@@ -246,7 +252,7 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   ensureCleanWorktree,
   ensureReleaseType,
   main
