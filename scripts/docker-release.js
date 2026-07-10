@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
 
-const dockerImage = "bestimmaa/posprint-mcp";
+const dockerImage = "mangogolia/posprint-mcp";
 const smokeTestPort = 39191;
 const smokeTestToken = "docker-release-smoke-test-token";
 
