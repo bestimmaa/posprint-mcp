@@ -34,7 +34,8 @@
     "dev": "tsx src/cli.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "release:docker": "node scripts/docker-release.js"
   },
   "dependencies": {
     "@bestimmaa/posprint": "^0.2.0",
