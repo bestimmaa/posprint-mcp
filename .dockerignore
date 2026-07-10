@@ -7,3 +7,5 @@ docs
 *.md
 !README.md
 npm-debug.log
+.env
+.env.example

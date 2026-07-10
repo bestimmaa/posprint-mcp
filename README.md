@@ -46,14 +46,21 @@ After global installation, you can use the shorter form in your MCP client confi
 
 For clients that can only talk to a *remote* MCP server (e.g. Notion custom agents), run `posprint-mcp` in a Docker container over HTTP instead of stdio. The image defaults to `MCP_TRANSPORT=http`.
 
+### Configuration via `.env`
+
+Copy [`.env.example`](.env.example) to `.env` and fill in your values — `.env` is gitignored, so real tokens/URIs never get committed.
+
+```bash
+cp .env.example .env
+# edit .env: set POSPRINT_AUTH_TOKEN (e.g. `openssl rand -hex 32`) and PRINTER_URI
+docker compose up -d --build
+```
+
+`docker-compose.yml` reads `.env` automatically (both for the container's env vars and the host port mapping). To run without Compose, pass the same file to `docker run` directly:
+
 ```bash
 docker build -t posprint-mcp .
-docker run -d \
-  --name posprint-mcp \
-  -p 3000:3000 \
-  -e POSPRINT_AUTH_TOKEN="$(openssl rand -hex 32)" \
-  -e PRINTER_URI="ipp://192.168.1.50:631/printers/T88V" \
-  posprint-mcp
+docker run -d --name posprint-mcp -p 3000:3000 --env-file .env posprint-mcp
 ```
 
 The server listens on `POST /mcp` (MCP Streamable HTTP transport, stateless) and `GET /healthz` (unauthenticated health check). It refuses to start if `POSPRINT_AUTH_TOKEN` is unset, since an unauthenticated remote endpoint would let anyone on the network print to your printer.
