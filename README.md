@@ -52,7 +52,7 @@ docker run -d \
   --name posprint-mcp \
   -p 3000:3000 \
   -e POSPRINT_AUTH_TOKEN="$(openssl rand -hex 32)" \
-  -e PRINTER_URI="ipp://taiga.local:631/printers/T88V" \
+  -e PRINTER_URI="ipp://192.168.1.50:631/printers/T88V" \
   posprint-mcp
 ```
 
@@ -65,6 +65,11 @@ Authorization: Bearer <POSPRINT_AUTH_TOKEN>
 ```
 
 Note: the container needs network access to your printer's CUPS/IPP endpoint (typically on your LAN), so run it on a network that can reach it (e.g. `--network host`, or a bridge network with routing to the printer's subnet).
+
+**`.local` (mDNS) hostnames will not resolve inside the container** — most base images (including this one) have no mDNS support, so a `PRINTER_URI` like `ipp://myprinter.local:631/...` will fail to connect. Use one of:
+
+- The printer's static/reserved IP address, or
+- A regular DNS name if your router provides one (e.g. many Fritz!Box routers also expose LAN devices as `<name>.fritz.box`, which resolves via normal DNS and works fine in containers).
 
 ### Environment variables
 
