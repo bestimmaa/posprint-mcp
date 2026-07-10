@@ -65,6 +65,10 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
       options: parsed.options
     });
 
+    console.error(
+      `[posprint-mcp] print job received: printerUri=${printerUri} lines=${getLineCount(parsed.markdown)} copies=${parsed.options?.copies ?? 1}`
+    );
+
     const result = await printMarkdown({
       printerUri,
       markdown: parsed.markdown,
@@ -72,11 +76,16 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
       timeoutMs: parsed.options?.timeoutMs
     });
 
+    const durationMs = Date.now() - start;
+    console.error(
+      `[posprint-mcp] print job completed: printerUri=${printerUri} durationMs=${durationMs}${result.jobId ? ` jobId=${result.jobId}` : ""}`
+    );
+
     return {
       ok: true,
       meta: {
         printerUri,
-        durationMs: Date.now() - start,
+        durationMs,
         printedAt: new Date().toISOString(),
         ...(result.jobId ? { jobId: result.jobId } : {})
       }

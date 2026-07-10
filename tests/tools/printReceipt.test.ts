@@ -61,6 +61,7 @@ describe("handlePrintReceipt", () => {
   it("prints on confirm mode with valid token", async () => {
     vi.mocked(consumeConfirmationToken).mockReturnValueOnce(undefined);
     vi.mocked(printMarkdown).mockResolvedValueOnce({ jobId: "99" });
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const result = await handlePrintReceipt({
       printerUri: "ipps://printer.local/ipp/print",
@@ -76,6 +77,13 @@ describe("handlePrintReceipt", () => {
       expect(result.meta.jobId).toBe("99");
       expect(result.meta.durationMs).toBeGreaterThanOrEqual(0);
     }
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("print job received"));
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/print job completed.*jobId=99/)
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   it("throws VALIDATION_ERROR for missing confirmation token in confirm mode", async () => {
