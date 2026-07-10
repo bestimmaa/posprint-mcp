@@ -42,6 +42,39 @@ After global installation, you can use the shorter form in your MCP client confi
 }
 ```
 
+## Docker (remote MCP server)
+
+For clients that can only talk to a *remote* MCP server (e.g. Notion custom agents), run `posprint-mcp` in a Docker container over HTTP instead of stdio. The image defaults to `MCP_TRANSPORT=http`.
+
+```bash
+docker build -t posprint-mcp .
+docker run -d \
+  --name posprint-mcp \
+  -p 3000:3000 \
+  -e POSPRINT_AUTH_TOKEN="$(openssl rand -hex 32)" \
+  -e PRINTER_URI="ipp://taiga.local:631/printers/T88V" \
+  posprint-mcp
+```
+
+The server listens on `POST /mcp` (MCP Streamable HTTP transport, stateless) and `GET /healthz` (unauthenticated health check). It refuses to start if `POSPRINT_AUTH_TOKEN` is unset, since an unauthenticated remote endpoint would let anyone on the network print to your printer.
+
+Point your remote MCP client at `http://<host>:3000/mcp` with header-based auth:
+
+```
+Authorization: Bearer <POSPRINT_AUTH_TOKEN>
+```
+
+Note: the container needs network access to your printer's CUPS/IPP endpoint (typically on your LAN), so run it on a network that can reach it (e.g. `--network host`, or a bridge network with routing to the printer's subnet).
+
+### Environment variables
+
+| Variable | Applies to | Description |
+| --- | --- | --- |
+| `MCP_TRANSPORT` | both | `stdio` (default) or `http`. The Docker image sets this to `http`. |
+| `PORT` | `http` transport | Port to listen on. Defaults to `3000`. |
+| `POSPRINT_AUTH_TOKEN` | `http` transport | Bearer token required on every `/mcp` request. **Required** when `MCP_TRANSPORT=http` — the server refuses to start without it. |
+| `PRINTER_URI` | both | Default CUPS printer URI. When set, the `print` tool's `printerUri` argument becomes optional; an explicit `printerUri` in a tool call still takes precedence. |
+
 ## Development
 
 ```bash
@@ -66,7 +99,7 @@ npm start
 
 Input:
 
-- `printerUri: string`
+- `printerUri?: string` (optional if the server has a default configured via the `PRINTER_URI` environment variable)
 - `markdown: string`
 - `mode: "preview" | "confirm"`
 - `confirmationToken?: string` (required when `mode="confirm"`)

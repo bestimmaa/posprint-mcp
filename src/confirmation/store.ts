@@ -2,6 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { AppError } from "../errors.js";
 import type { PrintReceiptInput } from "../types.js";
 
+interface ConfirmationSubject {
+  printerUri: string;
+  markdown: string;
+  options?: PrintReceiptInput["options"];
+}
+
 interface PendingConfirmation {
   printerUri: string;
   markdownHash: string;
@@ -23,7 +29,7 @@ export function buildMarkdownHash(markdown: string): string {
   return createHash("sha256").update(markdown, "utf8").digest("hex");
 }
 
-export function createConfirmationToken(input: Pick<PrintReceiptInput, "printerUri" | "markdown" | "options">): string {
+export function createConfirmationToken(input: ConfirmationSubject): string {
   const token = randomUUID();
   confirmationStore.set(token, {
     printerUri: input.printerUri,
@@ -36,7 +42,7 @@ export function createConfirmationToken(input: Pick<PrintReceiptInput, "printerU
 }
 
 export function consumeConfirmationToken(
-  input: Pick<PrintReceiptInput, "printerUri" | "markdown" | "options"> & { confirmationToken: string },
+  input: ConfirmationSubject & { confirmationToken: string },
   now = Date.now(),
   ttlMs = DEFAULT_TTL_MS
 ): void {

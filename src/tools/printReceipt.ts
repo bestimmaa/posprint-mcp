@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { createConfirmationToken, consumeConfirmationToken } from "../confirmation/store.js";
+import { getDefaultPrinterUri } from "../config.js";
 import { AppError, mapUnknownError } from "../errors.js";
 import { printMarkdown } from "../printing/posprintClient.js";
 import type { PrintToolResult } from "../types.js";
@@ -22,12 +23,19 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
 
   try {
     const parsed = parsePrintReceiptInput(input);
-    printerUri = parsed.printerUri;
+    printerUri = parsed.printerUri ?? getDefaultPrinterUri();
+
+    if (!printerUri) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "printerUri is required (no default configured via PRINTER_URI)"
+      );
+    }
 
     if (parsed.mode === "preview") {
       const lineCount = getLineCount(parsed.markdown);
       const confirmationToken = createConfirmationToken({
-        printerUri: parsed.printerUri,
+        printerUri,
         markdown: parsed.markdown,
         options: parsed.options
       });
@@ -52,13 +60,13 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
 
     consumeConfirmationToken({
       confirmationToken: parsed.confirmationToken!,
-      printerUri: parsed.printerUri,
+      printerUri,
       markdown: parsed.markdown,
       options: parsed.options
     });
 
     const result = await printMarkdown({
-      printerUri: parsed.printerUri,
+      printerUri,
       markdown: parsed.markdown,
       copies: parsed.options?.copies,
       timeoutMs: parsed.options?.timeoutMs
@@ -67,7 +75,7 @@ export async function handlePrintReceipt(input: unknown): Promise<PrintToolResul
     return {
       ok: true,
       meta: {
-        printerUri: parsed.printerUri,
+        printerUri,
         durationMs: Date.now() - start,
         printedAt: new Date().toISOString(),
         ...(result.jobId ? { jobId: result.jobId } : {})

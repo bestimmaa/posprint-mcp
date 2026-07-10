@@ -7,7 +7,7 @@ export type PrintErrorCode =
 export type PrintMode = "preview" | "confirm";
 
 export interface PrintReceiptInput {
-  printerUri: string;
+  printerUri?: string;
   markdown: string;
   mode: PrintMode;
   confirmationToken?: string;

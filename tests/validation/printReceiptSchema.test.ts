@@ -27,6 +27,15 @@ describe("parsePrintReceiptInput", () => {
     expect(parsed.confirmationToken).toBe("token-123");
   });
 
+  it("accepts input without printerUri", () => {
+    const parsed = parsePrintReceiptInput({
+      markdown: "# Hello",
+      mode: "preview"
+    });
+
+    expect(parsed.printerUri).toBeUndefined();
+  });
+
   it("rejects empty markdown", () => {
     expect(() =>
       parsePrintReceiptInput({ printerUri: "ipps://printer.local/ipp/print", markdown: "", mode: "preview" })
