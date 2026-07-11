@@ -14,7 +14,7 @@ The npm package is prepared as `@bestimmaa/posprint-mcp` and exposes a `posprint
 
 - Primary tool name: `print`
 - Input includes:
-  - `printerUri: string`
+  - `printerUri?: string` (optional if `PRINTER_URI` env var is configured as a default)
   - `markdown: string`
   - `mode: "preview" | "confirm"`
   - `confirmationToken?: string` (required when `mode="confirm"`)
@@ -31,3 +31,8 @@ Printing is a two-step flow:
 ## Long Markdown Warning
 
 If markdown exceeds 80 lines, preview responses include a warning and recommend summarizing before printing.
+
+## Transports
+
+- `MCP_TRANSPORT=stdio` (default): local stdio transport, used by `npx`/global installs.
+- `MCP_TRANSPORT=http`: Streamable HTTP transport for remote clients (see `src/http/server.ts`), used by the Docker image. Requires `POSPRINT_AUTH_TOKEN` (bearer token) — the server refuses to start without it.

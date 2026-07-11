@@ -11,12 +11,17 @@ vi.mock("../../src/confirmation/store.js", () => ({
   consumeConfirmationToken: vi.fn()
 }));
 
+vi.mock("../../src/config.js", () => ({
+  getDefaultPrinterUri: vi.fn()
+}));
+
 import { printMarkdown } from "../../src/printing/posprintClient.js";
 import { consumeConfirmationToken, createConfirmationToken } from "../../src/confirmation/store.js";
+import { getDefaultPrinterUri } from "../../src/config.js";
 
 describe("handlePrintReceipt", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("returns preview payload and token in preview mode", async () => {
@@ -56,6 +61,7 @@ describe("handlePrintReceipt", () => {
   it("prints on confirm mode with valid token", async () => {
     vi.mocked(consumeConfirmationToken).mockReturnValueOnce(undefined);
     vi.mocked(printMarkdown).mockResolvedValueOnce({ jobId: "99" });
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const result = await handlePrintReceipt({
       printerUri: "ipps://printer.local/ipp/print",
@@ -71,6 +77,13 @@ describe("handlePrintReceipt", () => {
       expect(result.meta.jobId).toBe("99");
       expect(result.meta.durationMs).toBeGreaterThanOrEqual(0);
     }
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("print job received"));
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/print job completed.*jobId=99/)
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   it("throws VALIDATION_ERROR for missing confirmation token in confirm mode", async () => {
@@ -91,6 +104,45 @@ describe("handlePrintReceipt", () => {
         confirmationToken: "token-123"
       })
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("falls back to the configured default printerUri when omitted", async () => {
+    vi.mocked(getDefaultPrinterUri).mockReturnValueOnce("ipp://taiga.local:631/printers/T88V");
+    vi.mocked(createConfirmationToken).mockReturnValueOnce("token-123");
+
+    const result = await handlePrintReceipt({
+      markdown: "# Hi",
+      mode: "preview"
+    });
+
+    expect(result.ok).toBe(true);
+    expect(createConfirmationToken).toHaveBeenCalledWith(
+      expect.objectContaining({ printerUri: "ipp://taiga.local:631/printers/T88V" })
+    );
+  });
+
+  it("prefers an explicit printerUri over the configured default", async () => {
+    vi.mocked(createConfirmationToken).mockReturnValueOnce("token-123");
+
+    await handlePrintReceipt({
+      printerUri: "ipps://printer.local/ipp/print",
+      markdown: "# Hi",
+      mode: "preview"
+    });
+
+    expect(getDefaultPrinterUri).not.toHaveBeenCalled();
+
+    expect(createConfirmationToken).toHaveBeenCalledWith(
+      expect.objectContaining({ printerUri: "ipps://printer.local/ipp/print" })
+    );
+  });
+
+  it("throws VALIDATION_ERROR when printerUri is omitted and no default is configured", async () => {
+    vi.mocked(getDefaultPrinterUri).mockReturnValueOnce(undefined);
+
+    await expect(handlePrintReceipt({ markdown: "# Hi", mode: "preview" })).rejects.toMatchObject({
+      code: "VALIDATION_ERROR"
+    });
   });
 
   it("includes the actual printerUri in VALIDATION_ERROR meta when URI is invalid", async () => {
