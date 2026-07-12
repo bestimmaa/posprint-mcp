@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The version history source of truth is git tags in the format `vMAJOR.MINOR.PATCH`.
 
+## [0.3.0] - 2026-07-12
+
+### Added
+
+- Docker support: run the MCP server remotely via the `mangogolia/posprint-mcp` image with Streamable HTTP transport.
+
 ## [0.2.1] - 2026-06-14
 
 ### Fixed
