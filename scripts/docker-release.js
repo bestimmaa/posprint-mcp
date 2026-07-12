@@ -11,6 +11,7 @@ const pkg = require("../package.json");
 const dockerImage = "mangogolia/posprint-mcp";
 const smokeTestPort = 39191;
 const smokeTestToken = "docker-release-smoke-test-token";
+const platforms = ["linux/amd64", "linux/arm64"];
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -40,6 +41,14 @@ function ensureDockerAvailable() {
   }
 }
 
+function ensureBuildxAvailable() {
+  try {
+    run("docker", ["buildx", "version"]);
+  } catch {
+    throw new Error("Docker release requires buildx to be available. Run 'docker buildx create --use' if needed.");
+  }
+}
+
 function ensureGitTagExists(version) {
   const tag = `v${version}`;
   let taggedCommit;
@@ -58,11 +67,45 @@ function ensureGitTagExists(version) {
   return tag;
 }
 
-function buildImage(version) {
+function buildAndPushImage(version) {
   const versionTag = `${dockerImage}:${version}`;
   const latestTag = `${dockerImage}:latest`;
-  run("docker", ["build", "-t", versionTag, "-t", latestTag, "."], { stdio: "inherit" });
+
+  run(
+    "docker",
+    [
+      "buildx",
+      "build",
+      "--platform", platforms.join(","),
+      "--tag", versionTag,
+      "--tag", latestTag,
+      "--push",
+      "."
+    ],
+    { stdio: "inherit" }
+  );
+
   return { versionTag, latestTag };
+}
+
+function pullSinglePlatformImage(tag, platform) {
+  const platformTag = `${tag}-${platform.replace(/\//g, "-")}`;
+  const buildxTag = `${tag}-${platform.replace(/\//g, "-")}`;
+
+  run(
+    "docker",
+    [
+      "buildx",
+      "build",
+      "--platform", platform,
+      "--tag", platformTag,
+      "--load",
+      "."
+    ],
+    { stdio: "inherit" }
+  );
+
+  return platformTag;
 }
 
 function sleep(ms) {
@@ -108,20 +151,24 @@ async function smokeTestImage(versionTag) {
 
 async function main() {
   ensureDockerAvailable();
+  ensureBuildxAvailable();
   ensureCleanWorktree();
 
   const version = pkg.version;
   const tag = ensureGitTagExists(version);
 
-  console.log(`Building ${dockerImage} at version ${version} (git tag ${tag})...`);
-  const { versionTag, latestTag } = buildImage(version);
+  console.log(`Building ${dockerImage} at version ${version} (git tag ${tag}) for ${platforms.join(", ")}...`);
+  const { versionTag } = buildAndPushImage(version);
+
+  console.log("Pulling local platform image for smoke test...");
+  const localPlatformTag = pullSinglePlatformImage(versionTag, process.arch === "arm64" ? "linux/arm64" : "linux/amd64");
 
   console.log("Running smoke test (start container, check GET /healthz)...");
-  await smokeTestImage(versionTag);
+  await smokeTestImage(localPlatformTag);
 
-  console.log(`Docker image built and verified: ${versionTag}`);
-  console.log(`Next: docker push ${versionTag}`);
-  console.log(`Next: docker push ${latestTag}`);
+  console.log(`Docker image built, pushed, and verified: ${versionTag}`);
+  console.log(`Next: docker pull ${versionTag}`);
+  console.log(`Next: docker pull ${dockerImage}:latest`);
 }
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
